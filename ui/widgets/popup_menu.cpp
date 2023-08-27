@@ -684,6 +684,7 @@ void PopupMenu::showStarted() {
 	if (isHidden()) {
 		show();
 		startShowAnimation();
+		Integration::Instance().preparePopupMenu(this);
 		return;
 	} else if (!_hiding) {
 		return;
@@ -1002,6 +1003,7 @@ void PopupMenu::showPrepared(TriggeredSource source) {
 	if (::Platform::IsWindows()) {
 		ForceFullRepaintSync(this);
 	}
+	Integration::Instance().preparePopupMenu(this);
 	show();
 	Platform::ShowOverAll(this);
 	raise();
