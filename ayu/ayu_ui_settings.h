@@ -6,7 +6,7 @@
 // Copyright @Radolyn, 2026
 #pragma once
 
-namespace AyuUiSettings {
+namespace LuxuryUiSettings {
 
 inline constexpr int kMaxAvatarCorners = 23;
 

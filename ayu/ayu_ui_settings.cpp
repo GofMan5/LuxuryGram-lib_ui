@@ -8,7 +8,7 @@
 
 #include <utility>
 
-namespace AyuUiSettings {
+namespace LuxuryUiSettings {
 
 QString monoFont;
 double wideMultiplier = 1.0;

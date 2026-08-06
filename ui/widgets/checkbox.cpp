@@ -22,19 +22,11 @@ namespace Ui {
 namespace {
 
 int SwitchShift(not_null<const style::Toggle *> st) {
-	return AyuUiSettings::isMaterialSwitches() ? st->shift : st::defaultToggleShift;
+	return LuxuryUiSettings::isMaterialSwitches() ? st->shift : st::defaultToggleShift;
 }
 
 int SwitchDiameter(not_null<const style::Toggle *> st) {
-	return AyuUiSettings::isMaterialSwitches() ? st->diameter : st::defaultToggleDiameter;
-}
-
-int SwitchDiameter(not_null<const style::Check *> st) {
-	return AyuUiSettings::isMaterialSwitches() ? st->diameter : st::defaultToggleDiameter;
-}
-
-int SwitchDiameter(not_null<const style::Radio *> st) {
-	return AyuUiSettings::isMaterialSwitches() ? st->diameter : st::defaultToggleDiameter;
+	return LuxuryUiSettings::isMaterialSwitches() ? st->diameter : st::defaultToggleDiameter;
 }
 
 } // namespace
@@ -58,8 +50,8 @@ void AbstractCheckView::setChecked(bool checked, anim::type animated) {
 			[=] { if (_updateCallback) _updateCallback(); },
 			_checked ? 0. : 1.,
 			_checked ? 1. : 0.,
-			AyuUiSettings::isMaterialSwitches() ? _duration : st::defaultToggleDuration,
-			AyuUiSettings::isMaterialSwitches() ? anim::easeOutCubic : anim::linear);
+			LuxuryUiSettings::isMaterialSwitches() ? _duration : st::defaultToggleDuration,
+			LuxuryUiSettings::isMaterialSwitches() ? anim::easeOutCubic : anim::linear);
 	}
 	checkedChangedHook(animated);
 	if (changed) {
@@ -120,9 +112,9 @@ void ToggleView::paint(QPainter &p, int left, int top, int outerWidth) {
 	auto fgBrush = anim::brush(_st->untoggledFg, _st->toggledFg, toggled);
 
 	auto fgRectF = QRectF(fgRect);
-	if (AyuUiSettings::isMaterialSwitches()) {
-		const auto ayuToggleAnim = anim::interpolateToF(_st->animPadding, 0, toggled);
-		fgRectF.setRect(fgRectF.x() + ayuToggleAnim / 2., fgRectF.y() + ayuToggleAnim / 2., fgRectF.width() - ayuToggleAnim, fgRectF.height() - ayuToggleAnim);
+	if (LuxuryUiSettings::isMaterialSwitches()) {
+		const auto luxuryToggleAnim = anim::interpolateToF(_st->animPadding, 0, toggled);
+		fgRectF.setRect(fgRectF.x() + luxuryToggleAnim / 2., fgRectF.y() + luxuryToggleAnim / 2., fgRectF.width() - luxuryToggleAnim, fgRectF.height() - luxuryToggleAnim);
 	}
 
 	p.setPen(Qt::NoPen);

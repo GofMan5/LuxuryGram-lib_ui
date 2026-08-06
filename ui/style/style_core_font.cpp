@@ -127,7 +127,7 @@ bool LoadCustomFont(const QString &filePath) {
 }
 
 [[nodiscard]] QString ManualMonospaceFont() {
-	const auto monoFont = AyuUiSettings::getMonoFont().isEmpty() ? "Cascadia Mono"_q : AyuUiSettings::getMonoFont();
+	const auto monoFont = LuxuryUiSettings::getMonoFont().isEmpty() ? "Cascadia Mono"_q : LuxuryUiSettings::getMonoFont();
 	const auto kTryFirst = std::initializer_list<QString>{
 		monoFont,
 		u"Cascadia Mono"_q,
