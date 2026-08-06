@@ -150,6 +150,23 @@ QImage GrabWidgetToImage(not_null<QWidget*> target, QRect rect, QColor bg) {
 	return result;
 }
 
+QPixmap GrabOpaque(not_null<QWidget*> target, QRect rect, QColor bg) {
+	SendPendingMoveResizeEvents(target);
+	if (rect.isNull()) {
+		rect = target->rect();
+	}
+
+	const auto ratio = style::DevicePixelRatio();
+	auto result = QImage(rect.size() * ratio, QImage::Format_RGB32);
+	result.setDevicePixelRatio(ratio);
+	result.fill(bg);
+	{
+		QPainter p(&result);
+		RenderWidget(p, target, QPoint(), rect);
+	}
+	return QPixmap::fromImage(std::move(result), Qt::ColorOnly);
+}
+
 void RenderWidget(
 		QPainter &painter,
 		not_null<QWidget*> source,
@@ -255,7 +272,13 @@ QPointF ScrollDeltaF(not_null<QWheelEvent*> e, bool touch) {
 			style::ConvertScaleExact(point.x()),
 			style::ConvertScaleExact(point.y()));
 	};
-	if (!e->pixelDelta().isNull()) {
+	// A usual wheel mouse on macOS has no pixel deltas, Qt fabricates them
+	// from the accelerated line delta - the angle one is de-accelerated.
+	const auto ignorePixels = ::Platform::IsMac()
+		&& !touch
+		&& (e->phase() == Qt::NoScrollPhase)
+		&& !e->angleDelta().isNull();
+	if (!ignorePixels && !e->pixelDelta().isNull()) {
 		return convert(e->pixelDelta())
 			* ((::Platform::IsWayland() && !touch)
 				? kMagicScrollMultiplier
