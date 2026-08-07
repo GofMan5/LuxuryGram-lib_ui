@@ -22,7 +22,7 @@
 #endif // __has_include(<glib.h>)
 
 
-// AyuGram includes
+// LuxuryGram includes
 #include "luxury/luxury_ui_settings.h"
 
 
