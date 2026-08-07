@@ -23,7 +23,7 @@
 
 
 // AyuGram includes
-#include "ayu/ayu_ui_settings.h"
+#include "luxury/luxury_ui_settings.h"
 
 
 void style_InitFontsResource() {

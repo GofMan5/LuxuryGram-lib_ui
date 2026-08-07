@@ -16,7 +16,7 @@
 #include <QtGui/QtEvents>
 #include <QtCore/QtMath>
 
-#include "ayu/ayu_ui_settings.h"
+#include "luxury/luxury_ui_settings.h"
 
 namespace Ui {
 namespace {

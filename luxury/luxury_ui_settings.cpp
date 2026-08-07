@@ -4,7 +4,7 @@
 // but be respectful and credit the original author.
 //
 // Copyright @Radolyn, 2026
-#include "ayu_ui_settings.h"
+#include "luxury_ui_settings.h"
 
 #include <utility>
 

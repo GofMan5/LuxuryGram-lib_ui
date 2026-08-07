@@ -14,7 +14,7 @@
 #include "base/bytes.h"
 #include "styles/palette.h"
 #include "styles/style_basic.h"
-#include "ayu/ayu_ui_settings.h"
+#include "luxury/luxury_ui_settings.h"
 
 #include <zlib.h>
 #include <QtCore/QFile>
