@@ -14,8 +14,6 @@ void setMonoFont(QString newFont);
 QString getMonoFont();
 
 void setWideMultiplier(double val);
-
-bool isWideMultiplied();
 int getWideMultiplied(int width, double mult);
 
 void setMaterialSwitches(bool val);

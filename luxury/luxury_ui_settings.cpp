@@ -6,6 +6,8 @@
 // Copyright @Radolyn, 2026
 #include "luxury_ui_settings.h"
 
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 namespace LuxuryUiSettings {
@@ -27,12 +29,10 @@ void setWideMultiplier(double val) {
 	wideMultiplier = val;
 }
 
-bool isWideMultiplied() {
-	return abs(wideMultiplier - 1.0) > 0.01;
-}
-
 int getWideMultiplied(int width, double mult) {
-	if (!isWideMultiplied()) {
+	// std::abs, not abs: with only <cstdlib> visible the latter picks
+	// int abs(int) and truncates, so every multiplier below 2.00 reads as 1.00.
+	if (std::abs(wideMultiplier - 1.0) <= 0.01) {
 		return width;
 	}
 	const auto res = width * (wideMultiplier * mult);
