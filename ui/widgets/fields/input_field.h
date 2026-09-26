@@ -17,6 +17,7 @@
 #include <rpl/variable.h>
 
 #include <QtGui/QTextCursor>
+#include <QShortcut>
 
 #include <any>
 
@@ -152,6 +153,14 @@ public:
 	struct TabbedRequest {
 		bool backward = false;
 		bool handled = false;
+
+		// Set when Tab should follow the default focus order instead: in
+		// screen reader mode the buttons and settings around the fields
+		// are Tab stops, and a handler that would only pass the focus on
+		// to another field is expected to leave the request alone. One
+		// that uses Tab for something else - accepting a suggestion -
+		// goes ahead as usual.
+		bool defaultOrder = false;
 	};
 	static const QString kTagBold;
 	static const QString kTagItalic;
@@ -173,6 +182,7 @@ public:
 	static const int kCustomEmojiId; // QTextFormat::Property
 	static const int kCustomEmojiLink; // QTextFormat::Property
 	static const int kQuoteId; // QTextFormat::Property
+	static const int kMisspelledProperty; // QTextFormat::Property
 
 	InputField(
 		QWidget *parent,
@@ -484,6 +494,9 @@ private:
 	void updateInnerInputMethodHints();
 	void paintEventInner(QPaintEvent *e);
 	void paintQuotes(QPaintEvent *e);
+#ifndef QT_SPELLCHECK_UNDERLINE_FROM_CHROME
+	void paintMisspelled(QPaintEvent *e);
+#endif // !QT_SPELLCHECK_UNDERLINE_FROM_CHROME
 
 	void mousePressEventInner(QMouseEvent *e);
 	void mouseReleaseEventInner(QMouseEvent *e);
@@ -729,6 +742,7 @@ private:
 	rpl::event_stream<MarkdownTag> _markdownTagApplies;
 
 	std::vector<std::unique_ptr<QShortcut>> _markdownShortcuts;
+	QShortcut _pasteShortcut;
 
 	rpl::event_stream<bool> _focusedChanges;
 	rpl::event_stream<> _heightChanges;
