@@ -181,9 +181,11 @@ void ItemBase::keyReleaseEvent(QKeyEvent *e) {
 }
 
 void ItemBase::mousePressEvent(QMouseEvent *e) {
-	if (!_menu->hasMouseMoved(e->globalPos())) {
-		return;
-	}
+	// LuxuryGram: upstream gates the press with hasMouseMoved(), which
+	// drops genuine clicks that arrive without a prior hover move (fast
+	// clicks right after open, synthesized touch-to-mouse taps). A press
+	// on the item is genuine regardless of prior motion; the release
+	// still guards the stray-release path below.
 	if (e->button() == Qt::LeftButton) {
 		_mousePressed = true;
 	}
@@ -202,9 +204,6 @@ void ItemBase::mouseMoveEvent(QMouseEvent *e) {
 }
 
 void ItemBase::mouseReleaseEvent(QMouseEvent *e) {
-	if (!_menu->hasMouseMoved(e->globalPos())) {
-		return;
-	}
 	const auto wasPressed = base::take(_mousePressed);
 #ifdef Q_OS_UNIX
 	if (isEnabled() && e->button() == Qt::RightButton) {
@@ -213,10 +212,16 @@ void ItemBase::mouseReleaseEvent(QMouseEvent *e) {
 	}
 #endif // Q_OS_UNIX
 	const auto isInRect = rect().contains(e->pos());
+	// LuxuryGram: a release with no matching press on this item means the
+	// press opened the menu itself (touch press-and-hold context menu) or
+	// belongs to the menu-opening gesture -- only accept it as a click if
+	// the pointer has really moved over the menu since. A full
+	// press-then-release pair is a genuine click without any checks.
 	if (isInRect
 		&& isEnabled()
 		&& e->button() == Qt::LeftButton
-		&& !wasPressed) {
+		&& !wasPressed
+		&& _menu->hasMouseMoved(e->globalPos())) {
 		//
 		setClicked(TriggeredSource::Mouse);
 		return;
