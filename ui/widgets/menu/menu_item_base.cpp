@@ -7,14 +7,15 @@
 #include "ui/widgets/menu/menu_item_base.h"
 
 #include "ui/widgets/menu/menu.h"
+#include "ui/effects/animations.h"
 
 #include <QtGui/QtEvents>
 
 namespace Ui::Menu {
 
 ItemBase::ItemBase(
-	not_null<Menu*> parent,
-	const style::Menu &st)
+		not_null<Menu*> parent,
+		const style::Menu &st)
 : RippleButton(parent, st.ripple)
 , _menu(parent) {
 }
@@ -29,6 +30,7 @@ void ItemBase::setSelected(
 		setMouseTracking(!selected);
 		_lastTriggeredSource = source;
 		_selected = selected;
+		startSelectionFade(selected);
 		update();
 		if (selected && focusPolicy() != Qt::NoFocus) {
 			setFocus();
@@ -36,6 +38,24 @@ void ItemBase::setSelected(
 			QAccessible::updateAccessibility(&event);
 		}
 	}
+}
+
+float64 ItemBase::selectionProgress() const {
+	return _selectionFade.value(_selected.current() ? 1. : 0.);
+}
+
+void ItemBase::startSelectionFade(bool selected) {
+	const auto to = selected ? 1. : 0.;
+	_selectionFade.start(
+		[this] { update(); },
+		selectionProgress(),
+		to,
+		kSelectionFadeDuration,
+		anim::easeOutCubic);
+}
+
+bool ItemBase::selectionAnimating() const {
+	return _selectionFade.animating();
 }
 
 bool ItemBase::isSelected() const {
@@ -122,6 +142,7 @@ bool ItemBase::preventClose() const {
 }
 
 void ItemBase::finishAnimating() {
+	_selectionFade.stop();
 	RippleButton::finishAnimating();
 }
 

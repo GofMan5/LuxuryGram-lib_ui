@@ -10,6 +10,7 @@
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/menu/menu.h"
 #include "ui/widgets/menu/menu_common.h"
+#include "ui/effects/animations.h"
 #include "styles/style_widgets.h"
 
 namespace Ui::Menu {
@@ -19,6 +20,10 @@ class Menu;
 class ItemBase : public RippleButton {
 public:
 	ItemBase(not_null<Menu*> parent, const style::Menu &st);
+
+	// Highlight cross-fade speed; fast enough to feel snappy at
+	// keyboard-driven selection skipping.
+	static constexpr auto kSelectionFadeDuration = crl::time(150);
 
 	Qt::FocusPolicy accessibilityFocusPolicy() override {
 		return Qt::ClickFocus;
@@ -31,6 +36,11 @@ public:
 		bool selected,
 		TriggeredSource source = TriggeredSource::Mouse);
 	bool isSelected() const;
+
+	// 0. when the item is not highlighted, 1. when it is, animated in
+	// between -- paint code uses this to cross-fade the highlight.
+	[[nodiscard]] float64 selectionProgress() const;
+	[[nodiscard]] bool selectionAnimating() const;
 
 	int index() const;
 	void setIndex(int index);
@@ -72,11 +82,15 @@ protected:
 	void mouseReleaseEvent(QMouseEvent *e) override;
 
 private:
+	void startSelectionFade(bool selected);
+
 	bool _mousePressed = false;
 	int _index = -1;
 
 	rpl::variable<bool> _selected = false;
 	rpl::event_stream<> _clicks;
+
+	Animations::Simple _selectionFade;
 
 	rpl::variable<int> _minWidth = 0;
 
