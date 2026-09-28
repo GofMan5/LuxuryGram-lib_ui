@@ -9,6 +9,9 @@
 namespace LuxuryUiSettings {
 
 inline constexpr int kMaxAvatarCorners = 23;
+inline constexpr int kMaxMenuRadius = 18;
+inline constexpr int kMinMenuRadius = 2;
+inline constexpr int kDefaultMenuRadius = 10;
 
 void setMonoFont(QString newFont);
 QString getMonoFont();
@@ -21,5 +24,11 @@ bool isMaterialSwitches();
 
 void setAvatarCorners(int val);
 int getAvatarCorners();
+
+void setMenuRadius(int val);
+int getMenuRadius();
+// Runtime popup-menu corner radius clamped to a sane range; the style
+// value is used as the fallback when the override is not set.
+int effectiveMenuRadius(int styleRadius);
 
 }

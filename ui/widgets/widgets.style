@@ -702,8 +702,8 @@ defaultLinkButton: LinkButton {
 
 defaultRippleAnimation: RippleAnimation {
 	color: windowBgRipple;
-	showDuration: 650;
-	hideDuration: 200;
+	showDuration: 300;
+	hideDuration: 160;
 }
 
 emptyRippleAnimation: RippleAnimation {
@@ -933,12 +933,12 @@ roundShadowRadius8px: Shadow {
 }
 
 defaultPanelAnimation: PanelAnimation {
-	startWidth: 0.5;
-	widthDuration: 0.6;
-	startHeight: 0.45;
-	heightDuration: 0.9;
-	startOpacity: 0.2;
-	opacityDuration: 0.3;
+	startWidth: 0.62;
+	widthDuration: 0.55;
+	startHeight: 0.5;
+	heightDuration: 0.85;
+	startOpacity: 0.25;
+	opacityDuration: 0.22;
 	startFadeTop: 0.;
 	fadeHeight: 0.2;
 	fadeOpacity: 1.0;
@@ -970,7 +970,7 @@ defaultMenu: Menu {
 	itemFgShortcutOver: windowSubTextFgOver;
 	itemFgShortcutDisabled: menuFgDisabled;
 	itemIconPosition: point(0px, 0px);
-	itemPadding: margins(17px, 8px, 17px, 7px);
+	itemPadding: margins(17px, 9px, 17px, 8px);
 	itemRightSkip: 6px;
 	itemStyle: defaultTextStyle;
 	itemToggle: defaultMenuToggle;
@@ -996,9 +996,9 @@ defaultPopupMenu: PopupMenu {
 
 	menu: defaultMenu;
 
-	radius: 6px;
-	duration: 150;
-	showDuration: 200;
+	radius: 10px;
+	duration: 130;
+	showDuration: 170;
 }
 
 defaultPillTabs: PillTabs {

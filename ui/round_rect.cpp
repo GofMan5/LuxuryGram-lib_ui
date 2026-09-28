@@ -125,9 +125,10 @@ void DrawRoundedRect(
 }
 
 RoundRect::RoundRect(
-	ImageRoundRadius radius,
-	const style::color &color)
+		ImageRoundRadius radius,
+		const style::color &color)
 : _color(color)
+, _radius(int(radius))
 , _refresh([=] { _corners = Images::PrepareCorners(radius, _color); }) {
 	_refresh();
 	style::PaletteChanged(
@@ -138,6 +139,7 @@ RoundRect::RoundRect(
 	int radius,
 	const style::color &color)
 : _color(color)
+, _radius(radius)
 , _refresh([=] { _corners = Images::PrepareCorners(radius, _color); }) {
 	_refresh();
 	style::PaletteChanged(
@@ -151,6 +153,10 @@ void RoundRect::setColor(const style::color &color) {
 
 const style::color &RoundRect::color() const {
 	return _color;
+}
+
+int RoundRect::radius() const {
+	return _radius;
 }
 
 void RoundRect::paint(

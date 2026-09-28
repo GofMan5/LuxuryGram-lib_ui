@@ -21,6 +21,7 @@
 #include "ui/screen_reader_mode.h"
 #include "base/timer.h"
 #include "ui/ui_utility.h"
+#include "luxury/luxury_ui_settings.h"
 
 #include <QtGui/QtEvents>
 #include <QtGui/QCursor>
@@ -68,7 +69,7 @@ struct PopupMenu::SubmenuAim {
 PopupMenu::PopupMenu(QWidget *parent, const style::PopupMenu &st)
 : RpWidget(parent)
 , _st(st)
-, _roundRect(_st.radius, _st.menu.itemBg)
+, _roundRect(LuxuryUiSettings::effectiveMenuRadius(_st.radius), _st.menu.itemBg)
 , _boxShadow(_st.shadow)
 , _scroll(this, st::defaultMultiSelect.scroll)
 , _menu(_scroll->setOwnedWidget(
@@ -82,7 +83,7 @@ PopupMenu::PopupMenu(QWidget *parent, const style::PopupMenu &st)
 PopupMenu::PopupMenu(QWidget *parent, QMenu *menu, const style::PopupMenu &st)
 : RpWidget(parent)
 , _st(st)
-, _roundRect(_st.radius, _st.menu.itemBg)
+, _roundRect(LuxuryUiSettings::effectiveMenuRadius(_st.radius), _st.menu.itemBg)
 , _boxShadow(_st.shadow)
 , _scroll(this, st::defaultMultiSelect.scroll)
 , _menu(_scroll->setOwnedWidget(
@@ -228,7 +229,10 @@ void PopupMenu::updateRoundingOverlay() {
 		_roundRect.paint(p, _inner, RectPart::AllCorners);
 		if (!_grabbingForPanelAnimation) {
 			p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-			_boxShadow.paint(p, _inner, _st.radius);
+			_boxShadow.paint(
+		p,
+		_inner,
+		_roundRect.radius());
 		}
 	}, _roundingOverlay->lifetime());
 
@@ -837,9 +841,9 @@ void PopupMenu::startShowAnimation() {
 
 		const auto pixelRatio = style::DevicePixelRatio();
 		_showAnimation = std::make_unique<PanelAnimation>(_st.animation, _origin);
-		_showAnimation->setFinalImage(std::move(cache), QRect(_inner.topLeft() * pixelRatio, _inner.size() * pixelRatio), _st.radius);
+		_showAnimation->setFinalImage(std::move(cache), QRect(_inner.topLeft() * pixelRatio, _inner.size() * pixelRatio), _roundRect.radius());
 		if (_useTransparency) {
-			_showAnimation->setCornerMasks(Images::CornersMask(_st.radius));
+			_showAnimation->setCornerMasks(Images::CornersMask(_roundRect.radius()));
 		} else {
 			_showAnimation->setSkipShadow(true);
 		}

@@ -34,6 +34,8 @@ public:
 	RoundRect(int radius, const style::color &color);
 
 	[[nodiscard]] const style::color &color() const;
+	[[nodiscard]] int radius() const;
+
 	void setColor(const style::color &color);
 	void paint(
 		QPainter &p,
@@ -46,6 +48,7 @@ public:
 
 private:
 	style::color _color;
+	int _radius = 0;
 	std::array<QImage, 4> _corners;
 	Fn<void()> _refresh;
 

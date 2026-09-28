@@ -55,4 +55,25 @@ int getAvatarCorners() {
 	return avatarCorners;
 }
 
+int menuRadius = kDefaultMenuRadius;
+
+void setMenuRadius(int val) {
+	menuRadius = std::clamp(
+		val,
+		kMinMenuRadius,
+		kMaxMenuRadius);
+}
+
+int getMenuRadius() {
+	return menuRadius;
+}
+
+int effectiveMenuRadius(int styleRadius) {
+	const auto override = getMenuRadius();
+	if (override < kMinMenuRadius || override > kMaxMenuRadius) {
+		return styleRadius;
+	}
+	return override;
+}
+
 }
