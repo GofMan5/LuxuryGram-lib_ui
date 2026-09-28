@@ -35,7 +35,7 @@
 namespace Ui {
 namespace {
 
-constexpr auto kSubmenuAimDelay = crl::time(300);
+constexpr auto kSubmenuAimDelay = crl::time(220);
 
 [[nodiscard]] bool PointInTriangle(
 		QPoint point,

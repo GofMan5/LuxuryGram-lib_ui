@@ -1011,7 +1011,7 @@ defaultPillTabs: PillTabs {
 	bg: transparent;
 	bgActive: windowBgOver;
 	bgBorder: windowBgOver;
-	duration: 300;
+	duration: 220;
 }
 
 popupMenuPillTabs: PillTabs(defaultPillTabs) {
@@ -1557,9 +1557,9 @@ defaultToast: Toast {
 	padding: margins(19px, 13px, 19px, 12px);
 	margin: margins(13px, 13px, 13px, 13px);
 	maxWidth: 480px;
-	radius: 8px;
-	durationFadeIn: 200;
-	durationFadeOut: 1000;
+	radius: 10px;
+	durationFadeIn: 160;
+	durationFadeOut: 240;
 	durationSlide: 160;
 }
 
