@@ -54,10 +54,6 @@ void ItemBase::startSelectionFade(bool selected) {
 		anim::easeOutCubic);
 }
 
-bool ItemBase::selectionAnimating() const {
-	return _selectionFade.animating();
-}
-
 bool ItemBase::isSelected() const {
 	return _selected.current();
 }
@@ -247,8 +243,16 @@ void ItemBase::mouseReleaseEvent(QMouseEvent *e) {
 		setClicked(TriggeredSource::Mouse);
 		return;
 	}
-	if (wasPressed && _menu && !isInRect) {
-		_menu->handleMouseRelease(e->globalPos());
+	if (wasPressed && !isInRect) {
+		// LuxuryGram: sub-threshold drags never refresh the Over flag
+		// (mouseMoveEvent early-returns before RippleButton), so the
+		// pressed item would still fire on a release that landed on a
+		// neighbouring item. Drop the armed click instead.
+		clearState();
+		if (_menu) {
+			_menu->handleMouseRelease(e->globalPos());
+		}
+		return;
 	}
 	RippleButton::mouseReleaseEvent(e);
 }

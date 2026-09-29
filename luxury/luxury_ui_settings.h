@@ -27,8 +27,8 @@ int getAvatarCorners();
 
 void setMenuRadius(int val);
 int getMenuRadius();
-// Runtime popup-menu corner radius clamped to a sane range; the style
-// value is used as the fallback when the override is not set.
+// Runtime popup-menu corner radius: one global value overrides every
+// style radius; kept inside a sane 2-18px range.
 int effectiveMenuRadius(int styleRadius);
 
 }

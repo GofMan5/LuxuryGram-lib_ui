@@ -40,7 +40,6 @@ public:
 	// 0. when the item is not highlighted, 1. when it is, animated in
 	// between -- paint code uses this to cross-fade the highlight.
 	[[nodiscard]] float64 selectionProgress() const;
-	[[nodiscard]] bool selectionAnimating() const;
 
 	int index() const;
 	void setIndex(int index);
