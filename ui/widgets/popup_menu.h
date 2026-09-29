@@ -265,7 +265,6 @@ private:
 	bool _grabbingForPanelAnimation = false;
 
 	TouchForward _touchForward;
-	int _touchBeginCounter = 0;
 	int _topShift = 0;
 	bool _clearLastSeparator = true;
 	bool _keepingDelayedActivationPaused = false;

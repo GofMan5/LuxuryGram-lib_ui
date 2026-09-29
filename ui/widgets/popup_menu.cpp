@@ -111,8 +111,6 @@ void PopupMenu::init() {
 		hideMenu(true);
 	}, lifetime());
 
-	_touchBeginCounter = Integration::Instance().touchCounterNow();
-
 	installEventFilter(this);
 
 	setupMenuWidget();
@@ -644,14 +642,14 @@ void PopupMenu::mouseMoveEvent(QMouseEvent *e) {
 }
 
 void PopupMenu::mousePressEvent(QMouseEvent *e) {
-	// Mouse presses, synthesized from touch events,
-	// should be ignored, if the touch, that caused
-	// them, started before the menu was created.
-	if (e->source() != Qt::MouseEventSynthesizedBySystem
-		|| (Integration::Instance().touchCounterNow()
-			> _touchBeginCounter)) {
-		forwardMousePress(e->globalPos());
-	}
+	// LuxuryGram: upstream dropped presses that Qt marked as synthesized
+	// by the system while no new touch had arrived since the menu was
+	// created. On some Windows pointer stacks every mouse press carries
+	// that source flag, so the whole menu went click-dead while hover and
+	// keyboard stayed alive. The touch-press-and-hold case the guard was
+	// written for is already covered by the hasMouseMoved() gate on the
+	// release-without-press path in ItemBase::mouseReleaseEvent.
+	forwardMousePress(e->globalPos());
 }
 
 bool PopupMenu::eventFilter(QObject *o, QEvent *e) {
