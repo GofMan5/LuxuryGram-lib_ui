@@ -624,6 +624,14 @@ void PopupMenu::focusOutEvent(QFocusEvent *e) {
 }
 
 void PopupMenu::hideEvent(QHideEvent *e) {
+	if (mouseGrabber() == this) {
+		releaseMouse();
+		// Hand the input ownership back: when a submenu closes, its
+		// parent stays open and must keep receiving mouse input.
+		if (_parent && !_parent->_hiding && !_parent->isHidden()) {
+			_parent->grabMouse();
+		}
+	}
 	if (_deleteOnHide) {
 		if (_triggering) {
 			_deleteLater = true;
@@ -816,6 +824,9 @@ void PopupMenu::showStarted() {
 		const auto weak = base::make_weak(this);
 		show();
 		if (weak) {
+			// See showPrepared() for why the menu grabs the mouse, and
+			// why the grab can only happen after show().
+			grabMouse();
 			startShowAnimation();
 		}
 		return;
@@ -1158,6 +1169,16 @@ void PopupMenu::showPrepared(TriggeredSource source) {
 	Platform::ShowOverAll(this);
 	raise();
 	activateWindow();
+	// The menu owns all mouse input while it is open: a widget-level
+	// grab routes every mouse message to this popup's window, so hover
+	// and presses cannot be lost to whatever window sits under the
+	// cursor or holds a platform auto-capture. Pointer stacks that mark
+	// real mouse input in flaky ways can starve popups of moves at the
+	// QPA routing level; with the grab that routing cannot matter. A
+	// submenu showing steals the grab from its parent, and its hide
+	// hands the grab back (see hideEvent). Must run after show(): the
+	// platform refuses to grab a not-yet-visible window.
+	grabMouse();
 	if (Ui::ScreenReaderModeActive()) {
 		_menu->setShowSource(TriggeredSource::Keyboard);
 	} else {
