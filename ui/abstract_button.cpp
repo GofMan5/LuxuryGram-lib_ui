@@ -106,13 +106,18 @@ void AbstractButton::keyReleaseEvent(QKeyEvent *e) {
 	if (isSubmitEvent(e)) {
 		e->accept();
 		if (isDown()) {
+			const auto over = isOver();
+			const auto weak = base::make_weak(this);
 			setDown(
 				false,
 				StateChangeSource::ByPress,
 				e->modifiers(),
 				Qt::LeftButton);
 
-			clicked(e->modifiers(), Qt::LeftButton);
+			// setDown() already activates a hovered button on release.
+			if (weak && !over) {
+				clicked(e->modifiers(), Qt::LeftButton);
+			}
 		}
 	} else {
 		RpWidget::keyReleaseEvent(e);
