@@ -3954,7 +3954,7 @@ void InputField::documentContentsChanged(
 			position = std::clamp(
 				textCursor().position() - charsAdded,
 				position,
-				position + inBlockBefore);
+				position + int(inBlockBefore));
 		}
 	}
 
