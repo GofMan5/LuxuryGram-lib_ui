@@ -220,6 +220,11 @@ void SideBarButton::paintEvent(QPaintEvent *e) {
 			width());
 	}
 
+	paintKeyboardFocus(
+		p,
+		{},
+		0,
+		(_active ? _st.textFgActive : _st.textFg)->c);
 	if (_lock.locked) {
 		validateLockIconCache();
 

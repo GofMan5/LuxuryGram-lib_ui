@@ -351,6 +351,9 @@ void AccessibilityState::writeTo(QAccessible::State &state) {
 	state.readOnly = readOnly ? 1 : 0;
 	state.selectable = selectable ? 1 : 0;
 	state.selected = selected ? 1 : 0;
+	state.expandable = expandable ? 1 : 0;
+	state.expanded = expanded ? 1 : 0;
+	state.collapsed = collapsed ? 1 : 0;
 }
 
 RpWidget::RpWidget(QWidget *parent)

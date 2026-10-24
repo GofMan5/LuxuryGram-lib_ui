@@ -3948,7 +3948,13 @@ void InputField::documentContentsChanged(
 		if (charsRemoved >= inBlockBefore) {
 			charsAdded -= inBlockBefore;
 			charsRemoved -= inBlockBefore;
-			position += inBlockBefore;
+			// The block text after the cursor and the block terminator are
+			// in that surplus too, so the commit is found from the cursor,
+			// which Qt has already moved past it.
+			position = std::clamp(
+				textCursor().position() - charsAdded,
+				position,
+				position + inBlockBefore);
 		}
 	}
 
@@ -4056,6 +4062,13 @@ void InputField::chopByMaxLength(int insertPosition, int insertLength) {
 	const auto fullSize = cursor.position();
 	const auto toRemove = fullSize - _maxLength;
 	if (toRemove > 0) {
+		const auto whole = [&](int position) {
+			return (position > 0
+				&& document()->characterAt(position - 1).isHighSurrogate()
+				&& document()->characterAt(position).isLowSurrogate())
+				? (position - 1)
+				: position;
+		};
 		if (toRemove > insertLength) {
 			if (insertLength) {
 				cursor.setPosition(insertPosition);
@@ -4064,12 +4077,12 @@ void InputField::chopByMaxLength(int insertPosition, int insertLength) {
 					QTextCursor::KeepAnchor);
 				cursor.removeSelectedText();
 			}
-			cursor.setPosition(fullSize - (toRemove - insertLength));
+			cursor.setPosition(whole(fullSize - (toRemove - insertLength)));
 			cursor.setPosition(fullSize, QTextCursor::KeepAnchor);
 			cursor.removeSelectedText();
 		} else {
 			cursor.setPosition(
-				insertPosition + (insertLength - toRemove));
+				whole(insertPosition + (insertLength - toRemove)));
 			cursor.setPosition(
 				insertPosition + insertLength,
 				QTextCursor::KeepAnchor);

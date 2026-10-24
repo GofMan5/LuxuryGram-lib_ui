@@ -10,6 +10,10 @@
 #include "ui/rp_widget.h"
 #include "base/flags.h"
 
+#include <QtGui/QColor>
+#include <array>
+#include <optional>
+
 namespace Ui {
 
 class AbstractButton : public RpWidget {
@@ -96,6 +100,14 @@ protected:
 	void mouseReleaseEvent(QMouseEvent *e) override;
 	void keyPressEvent(QKeyEvent *e) override;
 	void keyReleaseEvent(QKeyEvent *e) override;
+	void focusInEvent(QFocusEvent *e) override;
+	void focusOutEvent(QFocusEvent *e) override;
+	void paintKeyboardFocus(
+		QPainter &p,
+		QRect area = {},
+		int radius = 0,
+		QColor color = {},
+		std::optional<std::array<int, 4>> corners = std::nullopt) const;
 
 protected:
 	enum class StateFlag {
@@ -141,6 +153,7 @@ private:
 	bool _menuButton : 1 = false;
 	bool _listItem : 1 = false;
 	bool _pageTab : 1 = false;
+	bool _keyboardFocus : 1 = false;
 
 	Fn<void()> _clickedCallback;
 

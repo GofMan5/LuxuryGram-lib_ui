@@ -237,6 +237,7 @@ public:
 		NotifyAboutChange notify = NotifyAboutChange::Notify);
 
 	void finishAnimating();
+	void clearState() override;
 
 	[[nodiscard]] QMargins getMargins() const override {
 		return _st.margin;
@@ -261,6 +262,7 @@ protected:
 
 	void keyPressEvent(QKeyEvent *e) override;
 	void keyReleaseEvent(QKeyEvent *e) override;
+	void focusOutEvent(QFocusEvent *e) override;
 
 	void onStateChanged(State was, StateChangeSource source) override;
 	int resizeGetHeight(int newWidth) override;
@@ -291,6 +293,7 @@ private:
 	Text::String _text;
 	int _allowTextLines = 1;
 	bool _textBreakEverywhere = false;
+	bool _keyboardPressed = false;
 
 };
 

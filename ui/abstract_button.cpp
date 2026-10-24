@@ -6,13 +6,20 @@
 //
 #include "ui/abstract_button.h"
 
-#include "ui/ui_utility.h"
 #include "ui/integration.h"
+#include "ui/round_rect.h"
+#include "ui/ui_utility.h"
 
+#include "styles/palette.h"
+#include "styles/style_basic.h"
+
+#include <QtGui/QPainter>
+#include <QtGui/QPainterPath>
 #include <QtGui/QtEvents>
-
 #include <rpl/filter.h>
 #include <rpl/mappers.h>
+
+#include <algorithm>
 
 namespace Ui {
 
@@ -115,7 +122,7 @@ void AbstractButton::keyReleaseEvent(QKeyEvent *e) {
 				Qt::LeftButton);
 
 			// setDown() already activates a hovered button on release.
-			if (weak && !over) {
+			if (weak && !over && !isDisabled()) {
 				clicked(e->modifiers(), Qt::LeftButton);
 			}
 		}
@@ -124,9 +131,67 @@ void AbstractButton::keyReleaseEvent(QKeyEvent *e) {
 	}
 }
 
+void AbstractButton::focusInEvent(QFocusEvent *e) {
+	_keyboardFocus = (e->reason() != Qt::MouseFocusReason);
+	RpWidget::focusInEvent(e);
+	update();
+}
+
+void AbstractButton::focusOutEvent(QFocusEvent *e) {
+	_keyboardFocus = false;
+	const auto weak = base::make_weak(this);
+	if (isDown()) {
+		clearState();
+	}
+	if (weak) {
+		RpWidget::focusOutEvent(e);
+		update();
+	}
+}
+
+void AbstractButton::paintKeyboardFocus(
+		QPainter &p,
+		QRect area,
+		int radius,
+		QColor color,
+		std::optional<std::array<int, 4>> corners) const {
+	if (!hasFocus() || !_keyboardFocus || isDisabled()) {
+		return;
+	}
+	p.save();
+	p.setOpacity(1.);
+	p.setPen(QPen(color.isValid() ? color : st::windowFg->c, st::lineWidth));
+	p.setBrush(Qt::NoBrush);
+	p.setRenderHint(QPainter::Antialiasing, radius > 0 || corners.has_value());
+	const auto outline = (area.isEmpty() ? rectNoMargins() : area)
+		.marginsRemoved(QMargins(
+			st::buttonFocusInset,
+			st::buttonFocusInset,
+			st::buttonFocusInset,
+			st::buttonFocusInset));
+	if (corners) {
+		for (auto &corner : *corners) {
+			corner = std::max(0, corner - st::buttonFocusInset);
+		}
+		p.drawPath(ComplexRoundedRectPath(
+			outline,
+			(*corners)[0],
+			(*corners)[1],
+			(*corners)[2],
+			(*corners)[3]));
+	} else {
+		const auto innerRadius = std::max(0, radius - st::buttonFocusInset);
+		p.drawRoundedRect(outline, innerRadius, innerRadius);
+	}
+	p.restore();
+}
+
 void AbstractButton::clicked(
 		Qt::KeyboardModifiers modifiers,
 		Qt::MouseButton button) {
+	if (isDisabled()) {
+		return;
+	}
 	_modifiers = modifiers;
 	const auto weak = base::make_weak(this);
 	if (button == Qt::LeftButton) {
@@ -158,9 +223,12 @@ void AbstractButton::setOver(bool over, StateChangeSource source) {
 		_state &= ~State(StateFlag::Over);
 		Integration::Instance().unregisterLeaveSubscription(this);
 	}
+	const auto weak = base::make_weak(this);
 	onStateChanged(was, source);
-	updateCursor();
-	update();
+	if (weak) {
+		updateCursor();
+		update();
+	}
 }
 
 bool AbstractButton::setDown(
@@ -169,6 +237,7 @@ bool AbstractButton::setDown(
 		Qt::KeyboardModifiers modifiers,
 		Qt::MouseButton button) {
 	if (down
+		&& !isDisabled()
 		&& !(_state & StateFlag::Down)
 		&& (_acceptBoth || button == Qt::LeftButton)) {
 		auto was = _state;
@@ -179,7 +248,7 @@ bool AbstractButton::setDown(
 		if (weak) {
 			accessibilityStateChanged({ .pressed = true });
 		}
-		if (_triggerOnPress && button != Qt::LeftButton) {
+		if (weak && _triggerOnPress && button != Qt::LeftButton) {
 			_state &= ~State(StateFlag::Down);
 			clicked(modifiers, button);
 		}
@@ -192,7 +261,9 @@ bool AbstractButton::setDown(
 		onStateChanged(was, source);
 		if (weak) {
 			accessibilityStateChanged({ .pressed = true });
-			if (was & StateFlag::Over) {
+			if (!weak) {
+				return true;
+			} else if (was & StateFlag::Over) {
 				clicked(modifiers, button);
 			} else {
 				setOver(false, source);
@@ -204,7 +275,7 @@ bool AbstractButton::setDown(
 }
 
 void AbstractButton::updateCursor() {
-	const auto pointerCursor = _enablePointerCursor && isOver();
+	const auto pointerCursor = _enablePointerCursor && isOver() && !isDisabled();
 	if (_pointerCursor != pointerCursor) {
 		_pointerCursor = pointerCursor;
 		setCursor(_pointerCursor ? style::cur_pointer : style::cur_default);
@@ -212,20 +283,42 @@ void AbstractButton::updateCursor() {
 }
 
 void AbstractButton::setDisabled(bool disabled) {
-	auto was = _state;
-	if (disabled && !(_state & StateFlag::Disabled)) {
+	if (disabled == isDisabled()) {
+		return;
+	}
+	const auto was = _state;
+	if (disabled) {
 		_state |= StateFlag::Disabled;
-		onStateChanged(was, StateChangeSource::ByUser);
-	} else if (!disabled && (_state & StateFlag::Disabled)) {
+		_state &= ~State(StateFlag::Down);
+	} else {
 		_state &= ~State(StateFlag::Disabled);
-		onStateChanged(was, StateChangeSource::ByUser);
+	}
+	const auto weak = base::make_weak(this);
+	onStateChanged(was, StateChangeSource::ByUser);
+	if (weak) {
+		auto changes = QAccessible::State();
+		changes.disabled = true;
+		changes.pressed = !!(was & StateFlag::Down);
+		QAccessibleStateChangeEvent event(this, changes);
+		QAccessible::updateAccessibility(&event);
+		if (weak) {
+			updateCursor();
+			update();
+		}
 	}
 }
 
 void AbstractButton::clearState() {
-	auto was = _state;
-	_state = StateFlag::None;
+	const auto was = _state;
+	_state &= StateFlag::Disabled;
+	if (was & StateFlag::Over) {
+		Integration::Instance().unregisterLeaveSubscription(this);
+	}
+	const auto weak = base::make_weak(this);
 	onStateChanged(was, StateChangeSource::ByUser);
+	if (weak && (was & StateFlag::Down)) {
+		accessibilityStateChanged({ .pressed = true });
+	}
 }
 
 AccessibilityState AbstractButton::accessibilityState() const {

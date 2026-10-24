@@ -6,6 +6,8 @@
 // Copyright @Radolyn, 2026
 #include "luxury_ui_settings.h"
 
+#include "ui/style/style_core_scale.h"
+
 #include <algorithm>
 #include <cmath>
 #include <utility>
@@ -73,7 +75,7 @@ int effectiveMenuRadius(int styleRadius) {
 	if (override < kMinMenuRadius || override > kMaxMenuRadius) {
 		return styleRadius;
 	}
-	return override;
+	return style::ConvertScale(override);
 }
 
 }

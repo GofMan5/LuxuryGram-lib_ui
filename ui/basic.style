@@ -60,6 +60,7 @@ emojiSize: 18px;
 emojiPadding: 1px;
 
 lineWidth: 1px;
+buttonFocusInset: 3px;
 
 IconEmoji {
 	icon: icon;

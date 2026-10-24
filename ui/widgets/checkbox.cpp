@@ -6,6 +6,7 @@
 //
 #include "ui/widgets/checkbox.h"
 
+#include "base/algorithm.h"
 #include "ui/effects/ripple_animation.h"
 #include "ui/screen_reader_mode.h"
 #include "ui/basic_click_handlers.h"
@@ -687,9 +688,12 @@ void Checkbox::resizeToText() {
 
 void Checkbox::setChecked(bool checked, NotifyAboutChange notify) {
 	if (_check->checked() != checked) {
+		const auto weak = base::make_weak(this);
 		_check->setChecked(checked, anim::type::normal);
-		accessibilityStateChanged({ .checked = true });
-		if (notify == NotifyAboutChange::Notify) {
+		if (weak) {
+			accessibilityStateChanged({ .checked = true });
+		}
+		if (weak && notify == NotifyAboutChange::Notify) {
 			_checkedChanges.fire_copy(checked);
 		}
 	}
@@ -697,6 +701,11 @@ void Checkbox::setChecked(bool checked, NotifyAboutChange notify) {
 
 void Checkbox::finishAnimating() {
 	_check->finishAnimating();
+}
+
+void Checkbox::clearState() {
+	_keyboardPressed = false;
+	RippleButton::clearState();
 }
 
 void Checkbox::updateNaturalWidth() {
@@ -733,6 +742,7 @@ void Checkbox::paintEvent(QPaintEvent *e) {
 		}
 	}
 	if (realCheckRect.contains(e->rect()) || _text.isEmpty()) {
+		paintKeyboardFocus(p);
 		return;
 	}
 
@@ -816,6 +826,7 @@ void Checkbox::paintEvent(QPaintEvent *e) {
 			0,
 			_textBreakEverywhere);
 	}
+	paintKeyboardFocus(p);
 }
 
 void Checkbox::mousePressEvent(QMouseEvent *e) {
@@ -897,6 +908,9 @@ QPixmap Checkbox::grabCheckCache() const {
 }
 
 void Checkbox::onStateChanged(State was, StateChangeSource source) {
+	if (isDisabled()) {
+		_keyboardPressed = false;
+	}
 	RippleButton::onStateChanged(was, source);
 
 	if (isDisabled() && !(was & StateFlag::Disabled)) {
@@ -1095,6 +1109,10 @@ void Radiobutton::keyPressEvent(QKeyEvent *e) {
 		return Checkbox::keyPressEvent(e);
 	}
 
+	if (isDisabled()) {
+		e->accept();
+		return;
+	}
 	const auto &buttons = _group->_buttons;
 	if (buttons.size() < 2) {
 		e->ignore();
@@ -1125,7 +1143,12 @@ void Radiobutton::keyPressEvent(QKeyEvent *e) {
 	}
 
 	const auto step = (key == Qt::Key_Down || key == Qt::Key_Right) ? 1 : -1;
-	const auto nextIndex = currentIndex + step;
+	auto nextIndex = currentIndex + step;
+	while (nextIndex >= 0
+		&& nextIndex < buttons.size()
+		&& buttons[nextIndex]->isDisabled()) {
+		nextIndex += step;
+	}
 
 	if (nextIndex >= 0 && nextIndex < buttons.size()) {
 		const auto nextButton = buttons[nextIndex];
@@ -1146,7 +1169,8 @@ AccessibilityState Checkbox::accessibilityState() const {
 }
 
 void Checkbox::accessibilityDoAction(const QString &name) {
-	if (name == QAccessibleActionInterface::pressAction()) {
+	if (name == QAccessibleActionInterface::pressAction()
+		|| name == QAccessibleActionInterface::toggleAction()) {
 		if (!isDisabled()) {
 			handlePress();
 		}
@@ -1161,17 +1185,28 @@ bool Checkbox::isSubmitEvent(not_null<QKeyEvent*> e) const {
 }
 
 void Checkbox::keyPressEvent(QKeyEvent *e) {
-	if (!isSubmitEvent(e)) {
+	if (isSubmitEvent(e)) {
+		_keyboardPressed = !isDisabled();
+		e->accept();
+	} else {
 		RippleButton::keyPressEvent(e);
 	}
 }
 
 void Checkbox::keyReleaseEvent(QKeyEvent *e) {
 	if (isSubmitEvent(e)) {
-		handlePress();
+		e->accept();
+		if (base::take(_keyboardPressed) && !isDisabled()) {
+			handlePress();
+		}
 	} else {
 		RippleButton::keyReleaseEvent(e);
 	}
+}
+
+void Checkbox::focusOutEvent(QFocusEvent *e) {
+	_keyboardPressed = false;
+	RippleButton::focusOutEvent(e);
 }
 
 } // namespace Ui

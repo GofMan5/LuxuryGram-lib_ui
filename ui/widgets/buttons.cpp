@@ -91,14 +91,22 @@ void LinkButton::paintEvent(QPaintEvent *e) {
 	} else {
 		p.drawText(left, top, _text);
 	}
+	paintKeyboardFocus(p);
 }
 
 void LinkButton::setText(const QString &text) {
+	if (_text == text) {
+		return;
+	}
 	_text = text;
 	_textWidth = _st.font->width(_text);
-	accessibilityNameChanged();
+	const auto weak = base::make_weak(this);
 	resizeToText();
+	if (!weak) {
+		return;
+	}
 	update();
+	accessibilityNameChanged();
 }
 
 void LinkButton::resizeToText() {
@@ -124,8 +132,11 @@ RippleButton::RippleButton(QWidget *parent, const style::RippleAnimation &st)
 }
 
 void RippleButton::clearState() {
+	const auto weak = base::make_weak(this);
 	AbstractButton::clearState();
-	finishAnimating();
+	if (weak) {
+		finishAnimating();
+	}
 }
 
 void RippleButton::finishAnimating() {
@@ -289,6 +300,11 @@ void FlatButton::paintEvent(QPaintEvent *e) {
 		{ 0, _st.textTop, 0, 0 }
 	);
 	p.drawText(textRect, _text, style::al_top);
+	paintKeyboardFocus(
+		p,
+		inner,
+		0,
+		_colorOverride.value_or((isOver() ? _st.overColor : _st.color)->c));
 }
 
 void FlatButton::setTextMargins(QMargins margins) {
@@ -579,6 +595,14 @@ void RoundButton::paintEvent(QPaintEvent *e) {
 			: _st.icon;
 		current.paint(p, QPoint(iconLeft, iconTop), width());
 	}
+	paintKeyboardFocus(
+		p,
+		myrtlrect(rounded),
+		_fullRadius
+			? rounded.height() / 2
+			: (_st.radius ? _st.radius : st::buttonRadius),
+		_textFgOverride.value_or(((over || down) ? _st.textFgOver : _st.textFg)->c),
+		_fullRadius ? std::nullopt : _cornerRadii);
 }
 
 QImage RoundButton::prepareRippleMask() const {
@@ -691,6 +715,12 @@ void IconButton::paintEvent(QPaintEvent *e) {
 			}
 		}
 	}
+	paintKeyboardFocus(
+		p,
+		myrtlrect(QRect(
+			_st.rippleAreaPosition,
+			QSize(_st.rippleAreaSize, _st.rippleAreaSize))),
+		_st.rippleAreaSize / 2);
 }
 
 void IconButton::onStateChanged(State was, StateChangeSource source) {
@@ -787,6 +817,7 @@ void CrossButton::paintEvent(QPaintEvent *e) {
 				_st.crossPosition.y(),
 				width(),
 				shown);
+			paintKeyboardFocus(p);
 			return;
 		} else {
 			loading = ((now - _loadingAnimation.started())
@@ -802,6 +833,7 @@ void CrossButton::paintEvent(QPaintEvent *e) {
 		width(),
 		shown,
 		loading);
+	paintKeyboardFocus(p);
 }
 
 bool CrossButton::stopLoadingAnimation(crl::time now) {
@@ -988,6 +1020,7 @@ void SettingsButton::paintEvent(QPaintEvent *e) {
 	if (_toggle) {
 		paintToggle(p, outerw);
 	}
+	paintKeyboardFocus(p);
 }
 
 void SettingsButton::paintBg(Painter &p, const QRect &rect, bool over) const {
@@ -1048,7 +1081,9 @@ void SettingsButton::onStateChanged(
 		RippleButton::onStateChanged(was, source);
 	}
 	if (_toggle) {
-		_toggle->setStyle(isOver() ? _st.toggleOver : _st.toggle);
+		_toggle->setStyle((isOver() && !nowDisabled)
+			? _st.toggleOver
+			: _st.toggle);
 	}
 	if (nowDisabled != wasDisabled) {
 		setPointerCursor(!isDisabled());

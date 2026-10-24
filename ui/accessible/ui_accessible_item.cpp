@@ -256,7 +256,11 @@ void Item::doAction(const QString &actionName) {
 	// gone). Qt reports ProviderOptions_UseComThreading from an STA, so this
 	// runs on the main thread - but re-entrantly, while it pumps messages.
 	const auto identity = _identity;
-	if (actionName == QAccessibleActionInterface::setFocusAction()
+	// Selecting a tab activates it; moving focus alone does not.
+	if (actionName == QAccessibleActionInterface::toggleAction()
+		&& role() == QAccessible::PageTab) {
+		parent->accessibilityChildActivate(identity);
+	} else if (actionName == QAccessibleActionInterface::setFocusAction()
 		|| actionName == QAccessibleActionInterface::toggleAction()) {
 		parent->accessibilityChildSetFocus(identity);
 	} else if (actionName == QAccessibleActionInterface::pressAction()) {

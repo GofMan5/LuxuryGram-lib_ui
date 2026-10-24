@@ -10,6 +10,7 @@
 #include "base/integration.h"
 #include "base/timer.h"
 #include "ui/accessible/ui_accessible_item.h"
+#include "ui/abstract_button.h"
 #include "ui/rp_widget.h"
 #include "ui/screen_reader_mode.h"
 
@@ -27,9 +28,16 @@ public:
 	void registerWidget(not_null<RpWidget*> widget);
 
 private:
+	struct Entry {
+		QPointer<RpWidget> widget;
+		Qt::FocusPolicy regular = Qt::NoFocus;
+		Qt::FocusPolicy applied = Qt::NoFocus;
+	};
+
+	void updateFocusPolicy(Entry &entry);
 	void cleanup();
 
-	std::vector<QPointer<RpWidget>> _widgets;
+	std::vector<Entry> _widgets;
 	base::Timer _cleanupTimer;
 	bool _active = false;
 
@@ -44,10 +52,8 @@ FocusManager::FocusManager() : _cleanupTimer([=] { cleanup(); }) {
 		LOG(("Screen Reader: %1").arg(active ? "active" : "inactive"));
 
 		cleanup();
-		for (const auto &widget : _widgets) {
-			widget->setFocusPolicy(active
-				? widget->accessibilityFocusPolicy()
-				: Qt::NoFocus);
+		for (auto &entry : _widgets) {
+			updateFocusPolicy(entry);
 		}
 	}, _lifetime);
 }
@@ -56,12 +62,35 @@ void FocusManager::registerWidget(not_null<RpWidget*> widget) {
 	const auto policy = widget->accessibilityFocusPolicy();
 	if (policy == Qt::NoFocus) {
 		return;
-	} else if (_active) {
-		widget->setFocusPolicy(policy);
+	} else if (ranges::find_if(_widgets, [&](const Entry &entry) {
+		return entry.widget == widget.get();
+	}) != end(_widgets)) {
+		return;
 	}
-	_widgets.push_back(widget.get());
+	const auto regular = widget->focusPolicy();
+	_widgets.push_back({ widget.get(), regular, regular });
+	updateFocusPolicy(_widgets.back());
 	if (!_cleanupTimer.isActive()) {
 		_cleanupTimer.callOnce(kCleanupDelay);
+	}
+}
+
+void FocusManager::updateFocusPolicy(Entry &entry) {
+	const auto widget = entry.widget;
+	if (!widget) {
+		return;
+	}
+	const auto current = widget->focusPolicy();
+	// ponytail: same-value assignments have no signal; late ordinary-focus
+	// declarations still need their workaround until an explicit baseline API.
+	if (current != entry.applied) {
+		entry.regular = current;
+	}
+	entry.applied = _active
+		? Qt::FocusPolicy(entry.regular | widget->accessibilityFocusPolicy())
+		: entry.regular;
+	if (current != entry.applied) {
+		widget->setFocusPolicy(entry.applied);
 	}
 }
 
@@ -69,7 +98,7 @@ void FocusManager::cleanup() {
 	_widgets.erase(
 		ranges::remove_if(
 			_widgets,
-			[](const QPointer<RpWidget> &widget) { return !widget; }),
+			[](const Entry &entry) { return !entry.widget; }),
 		end(_widgets));
 }
 
@@ -111,6 +140,9 @@ QAccessible::Role Widget::role() const {
 QAccessible::State Widget::state() const {
 	auto result = QAccessibleWidget::state();
 	rp()->accessibilityState().writeTo(result);
+	if (const auto button = dynamic_cast<AbstractButton*>(rp().get())) {
+		result.disabled = result.disabled || button->isDisabled();
+	}
 	return result;
 }
 

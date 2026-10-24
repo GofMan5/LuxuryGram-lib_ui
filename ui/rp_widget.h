@@ -389,6 +389,9 @@ struct AccessibilityState {
 	bool readOnly : 1 = false;
 	bool selectable : 1 = false;
 	bool selected : 1 = false;
+	bool expandable : 1 = false;
+	bool expanded : 1 = false;
+	bool collapsed : 1 = false;
 
 	void writeTo(QAccessible::State &state);
 };
