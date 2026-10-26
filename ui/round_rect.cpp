@@ -129,7 +129,10 @@ RoundRect::RoundRect(
 		const style::color &color)
 : _color(color)
 , _radius(int(radius))
-, _refresh([=] { _corners = Images::PrepareCorners(radius, _color); }) {
+, _refresh([=] {
+	_corners = Images::PrepareCorners(radius, _color);
+	_cornersColor = _color->c;
+}) {
 	_refresh();
 	style::PaletteChanged(
 	) | rpl::on_next(_refresh, _lifetime);
@@ -140,7 +143,10 @@ RoundRect::RoundRect(
 	const style::color &color)
 : _color(color)
 , _radius(radius)
-, _refresh([=] { _corners = Images::PrepareCorners(radius, _color); }) {
+, _refresh([=] {
+	_corners = Images::PrepareCorners(radius, _color);
+	_cornersColor = _color->c;
+}) {
 	_refresh();
 	style::PaletteChanged(
 	) | rpl::on_next(_refresh, _lifetime);
@@ -159,10 +165,17 @@ int RoundRect::radius() const {
 	return _radius;
 }
 
+void RoundRect::validate() const {
+	if (_color->c != _cornersColor) {
+		_refresh();
+	}
+}
+
 void RoundRect::paint(
 		QPainter &p,
 		const QRect &rect,
 		RectParts parts) const {
+	validate();
 	DrawRoundedRect(p, rect, _color, _corners, parts);
 }
 
@@ -170,6 +183,7 @@ void RoundRect::paintSomeRounded(
 		QPainter &p,
 		const QRect &rect,
 		RectParts corners) const {
+	validate();
 	DrawRoundedRect(
 		p,
 		rect,

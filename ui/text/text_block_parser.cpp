@@ -478,6 +478,7 @@ bool BlockParser::checkEntities() {
 		|| entityType == EntityType::Email
 		|| entityType == EntityType::Phone
 		|| entityType == EntityType::BankCard
+		|| entityType == EntityType::TonAddress
 		|| entityType == EntityType::Mention
 		|| entityType == EntityType::Hashtag
 		|| entityType == EntityType::Cashtag
@@ -708,6 +709,7 @@ bool BlockParser::isLinkEntity(const EntityInText &entity) const {
 		EntityType::MentionName,
 		EntityType::Phone,
 		EntityType::BankCard,
+		EntityType::TonAddress,
 		EntityType::BotCommand
 	};
 	return ranges::find(urls, type) != std::end(urls);
@@ -715,7 +717,7 @@ bool BlockParser::isLinkEntity(const EntityInText &entity) const {
 
 void BlockParser::parse(const TextParseOptions &options) {
 	skipBadEntities();
-	trimSourceRange();
+	trimSourceRange(options);
 
 	_tText.resize(0);
 	if (_t->_extended) {
@@ -741,10 +743,13 @@ void BlockParser::parse(const TextParseOptions &options) {
 	finalize(options);
 }
 
-void BlockParser::trimSourceRange() {
-	const auto firstMonospaceOffset = EntityInText::FirstMonospaceOffset(
-		_source.entities,
-		_end - _start);
+void BlockParser::trimSourceRange(const TextParseOptions &options) {
+	const auto firstMonospaceOffset
+		= (options.flags & TextParseKeepLeadingSpaces)
+		? 0
+		: EntityInText::FirstMonospaceOffset(
+			_source.entities,
+			_end - _start);
 
 	while (_ptr != _end && IsTrimmed(*_ptr) && _ptr != _start + firstMonospaceOffset) {
 		++_ptr;

@@ -43,6 +43,7 @@ enum class EntityType : uchar {
 	Colorized, // Senders in chat list, attachments in chat list, etc.
 	Phone,
 	BankCard,
+	TonAddress,
 
 	Bold,
 	Semibold,
@@ -333,6 +334,7 @@ enum {
 	TextParseBotCommands = 0x010,
 	TextParseMarkdown = 0x020,
 	TextParseColorized = 0x040,
+	TextParseKeepLeadingSpaces = 0x080,
 };
 
 struct TextWithTags {
