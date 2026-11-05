@@ -9,7 +9,9 @@
 #include "base/debug_log.h"
 
 #include <QtCore/QHash>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QtCore/QHashSeed>
+#endif
 #include <QtCore/QList>
 #include <QtCore/QPair>
 #include <QtCore/QSet>
@@ -1066,7 +1068,11 @@ QByteArray SanitizeSvg(const QByteArray &bytes) {
 	auto exposedAncestorKeys = QSet<int>();
 	auto openElements = QList<OpenElement>();
 	auto idMap = QHash<InternKey, int>();
+	#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	const auto seed = QHashSeed::globalSeed();
+#else // Qt 5 keeps the global hash seed as a plain int.
+	const auto seed = uint(qGlobalQHashSeed());
+#endif
 	const auto intern = [&](const QString &value) {
 		const auto key = InternKey{ value, qHash(value, seed) };
 		const auto i = idMap.constFind(key);
